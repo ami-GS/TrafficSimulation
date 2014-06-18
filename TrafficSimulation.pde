@@ -38,8 +38,8 @@ void setup() {
      int k5 = int(random(5)); //人間の体内時計を0～4の間でセット
      int k6 = 2000 + int(random(200)); //200~400の範囲で体力をセット
      //int step = int(random(1,4));
-     int step = 4;
-     if(random(1000) < slowNum){step = 3;k1=2;}
+     int step = 3;
+     if(random(1000) < slowNum){step = 2;k1=2;}
      Human.add(new Human_class(k1,k2,k3,k4,k5,k6, step,i));
   }
   
@@ -62,16 +62,9 @@ void draw() {
     println();
   }
   
-  if(random(1000) < newCommer){
+  if(random(1000) < newCommer && subMAP[0][0] == 0){
      int k1 = 1; //生きている人間の状態を1、死んでいる場合は 0
-     //if(random(1000) < virus){k1 = 2;}
-     //int k2 = int(random(100,width-100)); //登場する初期 x座標
-     //int k3 = int(random(height)); //登場する初期 y座標
-     //int k4 = int(random(5)); //人間の動作方向をランダムにセット
-     //int k5 = int(random(5)); //人間の体内時計を0～4の間でセット
-     //int k6 = 2000 + int(random(200)); //200~400の範囲で体力をセット
-     //int step = int(random(1,4));
-     int step = int(random(3,5));
+     int step = int(random(2,4));
      if(random(1000) < slowNum){step = 3;k1=2;}  
      for(int i = 0; i < Max_Human; i++){
        Human_class h = (Human_class)Human.get(i);
@@ -251,7 +244,7 @@ class Human_class
       int tmpx = floor(xpos / 20);
       int tmpy = floor(ypos / 20);
 
-      int tx, ty;
+      int tx = xpos, ty = ypos;
       if(tmpy % 2 == 0 || tmpx == 0){direction=1;}//right
       else if(tmpy % 2 == 1 || tmpx == 19){direction=2;}//lefght
       if((tmpy % 2 == 0 && tmpx == 19) || (tmpy % 2 == 1 && tmpx == 0)){direction=3;}//down
@@ -261,7 +254,7 @@ class Human_class
         break; //何も動かず
     
       case 1:
-          tx = xpos;
+          //tx = xpos;
           xpos += step;
           
           if(tmpx != floor(xpos/20) && subMAP[tmpy][tmpx+1] == 0){
@@ -277,7 +270,7 @@ class Human_class
           break;
           
       case 2:
-          tx = xpos;
+          //tx = xpos;
           xpos -= step;
           if(tmpx != floor(xpos/20) && subMAP[tmpy][tmpx-1] == 0){
             subMAP[tmpy][tmpx] = 0;
@@ -293,7 +286,7 @@ class Human_class
           
       case 3:
           MAP[xpos][ypos] = 0;
-          ty = ypos;
+          //ty = ypos;
           ypos += step;
           if(tmpx == 0){
             if(tmpy != floor(ypos/20) && subMAP[tmpy+1][tmpx] == 0){
