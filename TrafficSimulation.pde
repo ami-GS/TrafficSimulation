@@ -7,9 +7,8 @@ int All_Human = 400;
 int Max_Human = 25; //シミュレータに登場させる人間の数
 
 //空間管理配列を準備
-int[][] MAP = new int[Length][Length]; 
+//int[][] MAP = new int[Length][Length]; 
 int[][] subMAP = new int[Length/20][Length/20]; 
-int[] seqMAP = new int[(Length/20)*(Length/20)];
 int TIME = 0;
 int slowNum = 10;
 int virus = 10;
@@ -32,15 +31,15 @@ void setup() {
   for(int i=0; i < Max_Human; i++){
      int k1 = 1; //生きている人間の状態を1、死んでいる場合は 0
      //if(random(1000) < virus){k1 = 2;}
-     int k2 = int(random(100,width-100)); //登場する初期 x座標
-     int k3 = int(random(height)); //登場する初期 y座標
-     int k4 = int(random(5)); //人間の動作方向をランダムにセット
+     int x = int(random(100,width-100)); //登場する初期 x座標
+     int y = int(random(height)); //登場する初期 y座標
+     //int k4 = int(random(5)); //人間の動作方向をランダムにセット
      int k5 = int(random(5)); //人間の体内時計を0～4の間でセット
      int k6 = 2000 + int(random(200)); //200~400の範囲で体力をセット
      //int step = int(random(1,4));
      int step = 3;
      if(random(1000) < slowNum){step = 2;k1=2;}
-     Human.add(new Human_class(k1,k2,k3,k4,k5,k6, step,i));
+     Human.add(new Human_class(k1,x,y,k5,k6, step,i));
   }
   
   //空間の状態管理配列を初期化
@@ -70,7 +69,7 @@ void draw() {
        Human_class h = (Human_class)Human.get(i);
        h.seqPosition += 1;
      }  
-     Human.add(0, new Human_class(k1,1,1,1,1,10,step, 0));
+     Human.add(0, new Human_class(k1,1,1,1,10,step, 0));
      Max_Human += 1;
   }
   
@@ -100,7 +99,7 @@ void draw() {
      //アニメーションを使っており、体内時計に合わせて動く
      h.draw(); 
      h.drive();
-     if(random(1000) < changeSpeed){h.step += int(random(-1,1));}
+     //if(random(1000) < changeSpeed){h.step += int(random(-1,1));}
 /*     h.hp = h.hp - 1; //1単位時間で体力を1減らす
 
      if(h.hp < 0){
@@ -112,8 +111,8 @@ void draw() {
      }*/
    //}
   if(floor(h.ypos/20)*20+(20-floor(h.xpos/20)) == Length){
-    //MAP[floor(h.ypos/20)*20+(floor(h.xpos/20))] = 0;
-    subMAP[floor(h.ypos/20)][floor(h.xpos/20)] = 0;
+    //subMAP[floor(h.ypos/20)][floor(h.xpos/20)] = 0;
+    subMAP[h.ycell][h.xcell] = 0;
     Human.remove(j);
     j--;
     Max_Human--;
@@ -128,9 +127,9 @@ void draw() {
  
  for(int i=0; i < Max_Human; i++){
    Human_class h = (Human_class)Human.get(i);
-   subMAP[floor(h.ypos/20)][floor(h.xpos/20)] = h.type;
+   //subMAP[floor(h.ypos/20)][floor(h.xpos/20)] = h.type;
+   subMAP[h.ycell][h.xcell] = h.type;
  }
-  
   TIME++;
 }
 
@@ -145,29 +144,30 @@ class Human_class
 
   int xpos; //x座標
   int ypos; //y座標
+  int xcell;
+  int ycell;
   int type; //人間の状態
   int direction; //人間の動作方向
   int timer; //体内時計
   int hp; //体力
   int step;
   int seqPosition;
-  boolean upFlag = false;
-  boolean fromDown = false;
-  boolean downFlag = false;
-  boolean fromUp = false;
-  Human_class(int c, int xp, int yp, int dirt, int t, int h, int st, int seq) {
+  boolean collide = false;
+  int stop = 0;
+  Human_class(int c, int xp, int yp,  int t, int h, int st, int seq) {
     xpos = xp;
     ypos = yp;
     type = c;
-    direction = dirt;
     timer = t;
     hp = h;
     step = st;
     seqPosition = seq;
-    if(floor(seq/20)%2 == 0){xpos = (seq%20)*20+1;}
-    else{xpos = Length-(seq%20)*20-1;}
+    if(floor(seq/20)%2 == 0){xpos = (seq%20)*20+1; }
+    else{xpos = Length-(seq%20)*20-20-step;}
     ypos = floor(seq/20)*20;//+10;
-    subMAP[floor(ypos/20)][floor(xpos/20)] = c; 
+    xcell = floor(xpos/20);
+    ycell = floor(ypos/20);
+
   }
 
   void setType(int t){
@@ -240,70 +240,89 @@ class Human_class
     
     //動く方向4方向 + 何も動かない
     //合計5種類を準備
+      if(stop != 0){
+        collide = false;
+        stop -= 1;
+        return; 
+      }
 
-      int tmpx = floor(xpos / 20);
-      int tmpy = floor(ypos / 20);
+      xcell = floor(xpos / 20);
+      ycell = floor(ypos / 20);
 
       int tx = xpos, ty = ypos;
-      if(tmpy % 2 == 0 || tmpx == 0){direction=1;}//right
-      else if(tmpy % 2 == 1 || tmpx == 19){direction=2;}//lefght
-      if((tmpy % 2 == 0 && tmpx == 19) || (tmpy % 2 == 1 && tmpx == 0)){direction=3;}//down
+      if(ycell % 2 == 0 || xcell == 0){direction=1;}//right
+      else if(ycell % 2 == 1 || xcell == 19){direction=2;}//left
+      if((ycell % 2 == 0 && xcell == 19) || (ycell % 2 == 1 && xcell == 0)){direction=3;}//down
 
-      switch(direction){
-      case 0:
-        break; //何も動かず
-    
+      switch(direction){    
       case 1:
-          //tx = xpos;
+          if(xcell != 0 && subMAP[ycell][xcell-1] == 2 && random(100) < infection){
+            setType(2);  
+          }
           xpos += step;
           
-          if(tmpx != floor(xpos/20) && subMAP[tmpy][tmpx+1] == 0){
-            subMAP[tmpy][tmpx] = 0;
-            subMAP[tmpy][floor(xpos/20)] = type;            
+          if(xcell != floor(xpos/20) && subMAP[ycell][xcell+1] == 0){
+            subMAP[ycell][xcell] = 0;
+            //subMAP[ycell][floor(xpos/20)] = type;            
+            subMAP[ycell][xcell+1] = type;
           }
-          else if(tmpx != floor(xpos/20) && subMAP[tmpy][tmpy+1] != 0){
-            if(subMAP[tmpy][tmpy+1] == 2 && random(100) < infection){
+          else if(xcell != floor(xpos/20) && subMAP[ycell][ycell+1] != 0){
+            if(subMAP[ycell][xcell+1] == 2 && random(100) < infection){
                 setType(2);
               }
             xpos = tx;
+            //xpos = xcell * 20;
+            collide = true;
+            stop = 2;
+            //xpos -= step;
         }
           break;
           
       case 2:
-          //tx = xpos;
-          xpos -= step;
-          if(tmpx != floor(xpos/20) && subMAP[tmpy][tmpx-1] == 0){
-            subMAP[tmpy][tmpx] = 0;
-            subMAP[tmpy][floor(xpos/20)] = type;            
+          if(xcell != 19 && subMAP[ycell][xcell+1] == 2 && random(100) < infection){
+            setType(2);  
           }
-          else if(tmpx != floor(xpos/20) && subMAP[tmpy][tmpx-1] != 0){
-            if(subMAP[tmpy][tmpx-1] == 2 && random(100) < infection){
+          xpos -= step;
+          if(xcell != floor(xpos/20) && subMAP[ycell][xcell-1] == 0){
+            subMAP[ycell][xcell] = 0;
+            //subMAP[ycell][floor(xpos/20)] = type;
+            subMAP[ycell][xcell-1] = type;            
+          }
+          else if(xcell != floor(xpos/20) && subMAP[ycell][xcell-1] != 0){
+            if(subMAP[ycell][xcell-1] == 2 && random(100) < infection){
                 setType(2);
               }            
             xpos = tx;
+            //xpos = xcell * 20;
+            collide = true;
+            stop = 2;
           }
           break;
           
       case 3:
-          MAP[xpos][ypos] = 0;
-          //ty = ypos;
           ypos += step;
-          if(tmpx == 0){
-            if(tmpy != floor(ypos/20) && subMAP[tmpy+1][tmpx] == 0){
-              subMAP[tmpy][tmpx] = 0;
-              subMAP[floor(ypos/20)][tmpx] = type;
+          if(xcell == 0){
+            if(ycell != floor(ypos/20) && subMAP[ycell+1][xcell] == 0){
+              subMAP[ycell][xcell] = 0;
+              subMAP[floor(ypos/20)][xcell] = type;
             }
-            else if(tmpy != floor(ypos/20) && subMAP[tmpy+1][tmpx] != 0){
+            else if(ycell != floor(ypos/20) && subMAP[ycell+1][xcell] != 0){
               ypos = ty;
+              //ypos = ycell*20-10;
+              collide = true;            
+              stop = 2;
             }            
           }
-          else if(tmpx == 19){
-            if(tmpy != floor(ypos/20) && subMAP[tmpy+1][tmpx] == 0){
-              subMAP[tmpy][tmpx] = 0;
-              subMAP[floor(ypos/20)][tmpx] = type;
+          else if(xcell == 19){
+            if(ycell != floor(ypos/20) && subMAP[ycell+1][xcell] == 0){
+              subMAP[ycell][xcell] = 0;
+              subMAP[floor(ypos/20)][xcell] = type;
             }
-            else if(tmpy != floor(ypos/20) && subMAP[tmpy+1][tmpx] != 0){
+            else if(ycell != floor(ypos/20) && subMAP[ycell+1][xcell] != 0){
               ypos = ty;
+              //ypos = ycell * 20-10;
+              collide = true;
+              stop = 2;            
             }            
           }
 
